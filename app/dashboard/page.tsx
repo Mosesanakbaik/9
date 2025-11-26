@@ -50,9 +50,7 @@ export default async function Page() {
           </div>
           <TransactionTrendChart data={charts} />
         </div>
-
-        {/* 🥇 CHART PIE TOP MENU */}
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm lg:col-span-2">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm ">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-pink-600">Top Menu</h3>
             <p className="text-sm text-gray-500">Menu yang paling banyak dipesan</p>

@@ -1,69 +1,128 @@
-'use client';
+"use client";
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line
-} from 'recharts';
-import { formatCurrency } from '@/app/lib/utils';
+  LineChart, Line, PieChart, Pie, Cell, Legend
+} from "recharts";
+import { formatCurrency } from "@/app/lib/utils";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Warna tema BabiPedia
+const COLORS = ["#ec4899", "#f472b6", "#fb7185", "#fbcfe8", "#fecdd3"];
+
+/* ---------------------------
+   WEEKLY SALES BAR CHART
+----------------------------*/
 export function WeeklySalesChart({ data }: { data: any[] }) {
   return (
-    // Hapus class h-[300px] dari div pembungkus
     <div className="w-full">
-      {/* Ganti height="100%" menjadi height={300} */}
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} dy={10} />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#6b7280', fontSize: 12 }}
+            tick={{ fill: "#6b7280", fontSize: 12 }}
             tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`}
           />
           <Tooltip
-            cursor={{ fill: '#fdf2f8' }}
-            formatter={(value: number) => [formatCurrency(value), 'Penjualan']}
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+            cursor={{ fill: "#fdf2f8" }}
+            formatter={(value: number) => [formatCurrency(value), "Penjualan"]}
+            contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
           />
-          <Bar
-            dataKey="revenue"
-            fill="#ec4899"
-            radius={[4, 4, 0, 0]}
-            barSize={40}
-          />
+          <Bar dataKey="revenue" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={40} />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* ---------------------------
+   TRANSACTION TREND LINE CHART
+----------------------------*/
 export function TransactionTrendChart({ data }: { data: any[] }) {
   return (
-    // Hapus class h-[300px] dari div pembungkus
     <div className="w-full">
-      {/* Ganti height="100%" menjadi height={300} */}
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
-          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} dy={10} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} />
           <Tooltip
-            formatter={(value: number) => [value, 'Transaksi']}
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+            formatter={(value: number) => [value, "Transaksi"]}
+            contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
           />
           <Line
             type="monotone"
             dataKey="transactions"
             stroke="#ec4899"
             strokeWidth={3}
-            dot={{ r: 4, fill: '#ec4899', strokeWidth: 2, stroke: '#fff' }}
+            dot={{ r: 4, fill: "#ec4899", strokeWidth: 2, stroke: "#fff" }}
             activeDot={{ r: 6 }}
           />
         </LineChart>
       </ResponsiveContainer>
     </div>
+  );
+}
+
+/* ---------------------------
+   🚀 NEW: TOP MENU PIE CHART
+----------------------------*/
+export function TopMenuPieChart({ data }: { data: { name: string; total: number }[] }) {
+  return (
+    <div className="w-full">
+      <ResponsiveContainer width="100%" height={320}>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="total"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={110}
+            label
+          >
+            {data.map((_, index) => (
+              <Cell
+                key={index}
+                fill={COLORS[index % COLORS.length]}
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={(value: number, _, item) => [`${value}x dipesan`, item?.payload?.name]}
+            contentStyle={{
+              borderRadius: "8px",
+              border: "none",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+            }}
+          />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function TopCustomersPieChart({ data }: { data: { name: string; total: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="total"
+          nameKey="name"
+          outerRadius={110}
+          fill="#8884d8"
+          label
+        >
+          {data.map((_, index) => (
+            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip />
+      </PieChart>
+    </ResponsiveContainer>
   );
 }

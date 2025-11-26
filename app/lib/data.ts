@@ -492,6 +492,28 @@ export async function fetchReportSummary(year: number) {
     };
   }
 }
+export async function fetchTopMenuData() {
+  noStore();
+  try {
+    const data = await sql<{ name: string; sold_count: number }[]>`
+      SELECT name, sold_count
+      FROM menus
+      WHERE is_deleted = FALSE
+      ORDER BY sold_count DESC
+      LIMIT 5
+    `;
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching top menu:', error);
+    return [];
+  }
+}
+
+
+//------------------------------------------------------------------------------------//
+//---------------------------------- Dashboard Data Fetching -------------------------//
+//------------------------------------------------------------------------------------//
 
 //------------------------------------------------------------------------------------//
 //---------------------------------- Dashboard Data Fetching -------------------------//
@@ -500,6 +522,9 @@ export async function fetchReportSummary(year: number) {
 export async function fetchDashboardData() {
   noStore();
   try {
+    // ==========================
+    // 1. Summary Data Mingguan
+    // ==========================
     const summaryQuery = await sql`
       SELECT 
         total_amount, 
@@ -539,13 +564,15 @@ export async function fetchDashboardData() {
 
     const revenueGrowth = calculateGrowth(thisWeek.revenue, lastWeek.revenue);
     const txGrowth = calculateGrowth(thisWeek.transactions, lastWeek.transactions);
-    
     const customerGrowth = calculateGrowth(thisWeekCustomers.size, lastWeekCustomers.size);
 
     const avgThisWeek = thisWeek.transactions > 0 ? thisWeek.revenue / thisWeek.transactions : 0;
     const avgLastWeek = lastWeek.transactions > 0 ? lastWeek.revenue / lastWeek.transactions : 0;
     const avgGrowth = calculateGrowth(avgThisWeek, avgLastWeek);
 
+    // ==============================
+    // 2. Weekly Chart (Sen–Min)
+    // ==============================
     const chartDataRaw = await sql`
       SELECT 
         TO_CHAR(created_at, 'Dy') as day_name,
@@ -571,6 +598,27 @@ export async function fetchDashboardData() {
       };
     });
 
+
+    // ==============================
+    // 3. TOP MENU (Top 5)
+    // ==============================
+    const topMenuRaw = await sql`
+      SELECT name, sold_count
+      FROM menus
+      WHERE is_deleted = FALSE
+      ORDER BY sold_count DESC
+      LIMIT 5
+    `;
+
+    const topMenu = topMenuRaw.map(m => ({
+      name: m.name,
+      sold_count: Number(m.sold_count)
+    }));
+
+
+    // ==============================
+    // FINAL RETURN
+    // ==============================
     return {
       cards: {
         revenue: thisWeek.revenue,
@@ -582,14 +630,16 @@ export async function fetchDashboardData() {
         avgTx: avgThisWeek,
         avgGrowth,
       },
-      charts
+      charts,
+      topMenu,   // <= Sudah dimasukkan
     };
 
   } catch (error) {
     console.error('Dashboard Error:', error);
     return {
       cards: { revenue: 0, revenueGrowth: 0, transactions: 0, txGrowth: 0, customers: 0, customerGrowth: 0, avgTx: 0, avgGrowth: 0 },
-      charts: []
+      charts: [],
+      topMenu: []
     };
   }
 }

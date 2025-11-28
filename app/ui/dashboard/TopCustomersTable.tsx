@@ -18,7 +18,7 @@ type Period = 'all-time' | 'this-month' | 'this-week';
 
 // Function untuk fetch data dari API
 async function fetchTopCustomersClient(period: Period): Promise<TopCustomer[]> {
-  const response = await fetch(`/api/topCustomers?period=${period}`);
+  const response = await fetch(`/api/top-customers?period=${period}`);
   
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);

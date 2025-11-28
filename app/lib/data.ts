@@ -509,6 +509,55 @@ export async function fetchTopMenuData() {
     return [];
   }
 }
+// Tambahkan di data.ts setelah fetchTopMenuData()
+
+export async function fetchTopCustomers(period: 'all-time' | 'this-month' | 'this-week' = 'all-time') {
+  noStore();
+  try {
+    let dateFilter = sql``;
+    
+    switch (period) {
+      case 'this-week':
+        dateFilter = sql`WHERE t.created_at >= date_trunc('week', CURRENT_DATE)`;
+        break;
+      case 'this-month':
+        dateFilter = sql`WHERE t.created_at >= date_trunc('month', CURRENT_DATE)`;
+        break;
+      case 'all-time':
+      default:
+        dateFilter = sql``;
+        break;
+    }
+
+    const data = await sql<{
+      name: string;
+      transaction_frequency: number;
+      total_spent: number;
+    }[]>`
+      SELECT 
+        c.name,
+        COUNT(t.id) as transaction_frequency,
+        COALESCE(SUM(t.total_amount), 0) as total_spent
+      FROM customers c
+      LEFT JOIN transactions t ON c.id = t.customer_id
+      ${dateFilter}
+      GROUP BY c.id, c.name
+      HAVING COUNT(t.id) > 0
+      ORDER BY total_spent DESC
+      LIMIT 5
+    `;
+
+    return data.map(customer => ({
+      name: customer.name,
+      frequency: Number(customer.transaction_frequency),
+      totalSpent: Number(customer.total_spent),
+      averagePerVisit: Number(customer.total_spent) / Number(customer.transaction_frequency),
+    }));
+  } catch (error) {
+    console.error('Error fetching top customers:', error);
+    return [];
+  }
+}
 
 
 //------------------------------------------------------------------------------------//
@@ -605,7 +654,7 @@ const charts = daysOrder.map(day => ({
   transactions: chartMap[day]?.transactions || 0,
 }));
 
-    
+
 
     // ==============================
     // 3. TOP MENU (Top 5)
@@ -624,6 +673,25 @@ const charts = daysOrder.map(day => ({
     }));
 
 
+
+const topCustomersRaw = await sql`
+      SELECT 
+        name,
+        transaction_frequency,
+        total_spent
+      FROM customers
+      WHERE transaction_frequency > 0
+      ORDER BY total_spent DESC
+      LIMIT 5
+    `;
+
+    const topCustomers = topCustomersRaw.map(customer => ({
+      name: customer.name,
+      frequency: Number(customer.transaction_frequency),
+      totalSpent: Number(customer.total_spent),
+      averagePerVisit: Number(customer.total_spent) / Number(customer.transaction_frequency),
+    }));
+
     // ==============================
     // FINAL RETURN
     // ==============================
@@ -639,7 +707,8 @@ const charts = daysOrder.map(day => ({
         avgGrowth,
       },
       charts,
-      topMenu,   // <= Sudah dimasukkan
+      topMenu,
+      topCustomers,   // <= Tambahkan ini
     };
 
   } catch (error) {
@@ -647,7 +716,10 @@ const charts = daysOrder.map(day => ({
     return {
       cards: { revenue: 0, revenueGrowth: 0, transactions: 0, txGrowth: 0, customers: 0, customerGrowth: 0, avgTx: 0, avgGrowth: 0 },
       charts: [],
-      topMenu: []
+      topMenu: [],
+      topCustomers: []  // <= Tambahkan ini
     };
   }
 }
+
+ 

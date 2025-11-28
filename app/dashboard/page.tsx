@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { fetchDashboardData } from "@/app/lib/data";
 import DashboardCards from "@/app/ui/dashboard/summary-cards";
 import { WeeklySalesChart, TransactionTrendChart, TopMenuPieChart } from "@/app/ui/dashboard/charts";
+import TopCustomersTable from "@/app/ui/dashboard/TopCustomersTable";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default async function Page() {
     redirect("/login");
   }
 
-  const { cards, charts, topMenu } = await fetchDashboardData();
+  const { cards, charts, topMenu, topCustomers } = await fetchDashboardData();
   const topMenuFormatted = topMenu.map((item: any) => ({
     name: item.name,
     total: Number(item.sold_count),
@@ -50,13 +51,19 @@ export default async function Page() {
           </div>
           <TransactionTrendChart data={charts} />
         </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm ">
+
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-pink-600">Top Menu</h3>
             <p className="text-sm text-gray-500">Menu yang paling banyak dipesan</p>
           </div>
           <TopMenuPieChart data={topMenuFormatted} />
         </div>
+
+        {/* Komponen Top Customers - PERBAIKI PROP NYA */}
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <TopCustomersTable initialData={topCustomers} />
+    </div>
       </div>
     </main>
   );

@@ -37,7 +37,7 @@
     "scripts/seed.js",
     "app/ui/pelanggan/cards.tsx",
     ".next/dev/types/**/*.ts"
-  ],
+, "app/api/auth/TopCustumers"  ],
   "exclude": [
     "node_modules"
   ]

@@ -51,7 +51,7 @@ export default function ReceiptModal({
 
                     {/* Toko Info */}
                     <div className="text-center mb-6 border-b border-dashed border-gray-300 pb-4">
-                        <h2 className="text-xl font-bold text-pink-600 mb-1 print:text-black">Babi Pedia</h2>
+                        <h2 className="text-xl font-bold text-pink-600 mb-1 print:text-black">BABIPEDIA</h2>
                         <p className="text-xs text-gray-500">Jl. K.H. Muhdi Gang Komajaya, Corongan, Maguwoharjo, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta</p>
                         <p className="text-xs text-gray-500">Telp: 0811-251-8481</p>
                     </div>

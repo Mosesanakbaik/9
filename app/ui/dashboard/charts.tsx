@@ -40,31 +40,106 @@
   /* ---------------------------
     TRANSACTION TREND LINE CHART
   ----------------------------*/
-  export function TransactionTrendChart({ data }: { data: any[] }) {
-    return (
-      <div className="w-full">
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} dy={10} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} />
-            <Tooltip
-              formatter={(value: number) => [value, "Transaksi"]}
-              contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-            />
-            <Line
-              type="monotone"
-              dataKey="transactions"
-              stroke="#ec4899"
-              strokeWidth={3}
-              dot={{ r: 4, fill: "#ec4899", strokeWidth: 2, stroke: "#fff" }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+ export function TransactionTrendChart({ data }: { data: any[] }) {
+  return (
+    <div className="w-full">
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} dy={10} />
+
+          {/* ⬇️ Y-Axis FIXED HERE */}
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#6b7280", fontSize: 12 }}
+            allowDecimals={false}
+            tickFormatter={(value) => Number.isInteger(value) ? value : ""}
+          />
+
+          <Tooltip
+            formatter={(value: number) => [value, "Transaksi"]}
+            contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+          />
+
+          <Line
+            type="monotone"
+            dataKey="transactions"
+            stroke="#ec4899"
+            strokeWidth={3}
+            dot={{ r: 4, fill: "#ec4899", strokeWidth: 2, stroke: "#fff" }}
+            activeDot={{ r: 6 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export default function TopPelangganTable({ data }: { data: any[] }) {
+  return (
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mt-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-bold text-pink-600">Performa Top 5 Pelanggan</h3>
+        <p className="text-sm text-gray-500">Analisis pelanggan terbaik</p>
       </div>
-    );
-  }
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-600 border-b">
+              <th className="py-3">Ranking</th>
+              <th>Nama Pelanggan</th>
+              <th>Frekuensi Transaksi</th>
+              <th>Total Belanja</th>
+              <th>Rata-rata/Transaksi</th>
+              <th>Kontribusi</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.map((item: any, index: number) => (
+              <tr
+                key={index}
+                className="border-b last:border-none hover:bg-pink-50/40 transition"
+              >
+                {/* Ranking */}
+                <td className="py-4 font-semibold">
+                  <span className="w-6 h-6 bg-pink-500 text-white rounded-full text-xs flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                </td>
+
+                {/* Nama */}
+                <td>{item.name}</td>
+
+                {/* Frekuensi */}
+                <td>
+                  <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                    {item.frequency}x
+                  </span>
+                </td>
+
+                {/* Total Belanja */}
+                <td className="font-medium">{formatCurrency(item.total_spent)}</td>
+
+                {/* Rata-rata */}
+                <td>{formatCurrency(item.avg_transaction)}</td>
+
+                {/* Kontribusi */}
+                <td>
+                  <span className="px-3 py-1 bg-pink-500 text-white text-xs rounded-full">
+                    {item.contribution}%
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
   /* ---------------------------
     🚀 NEW: TOP MENU PIE CHART

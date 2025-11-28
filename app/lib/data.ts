@@ -571,33 +571,41 @@ export async function fetchDashboardData() {
     const avgGrowth = calculateGrowth(avgThisWeek, avgLastWeek);
 
     // ==============================
-    // 2. Weekly Chart (Sen–Min)
-    // ==============================
-    const chartDataRaw = await sql`
-      SELECT 
-        TO_CHAR(created_at, 'Dy') as day_name,
-        SUM(total_amount) as daily_revenue,
-        COUNT(id) as daily_tx
-      FROM transactions
-      WHERE created_at >= date_trunc('week', CURRENT_DATE)
-      GROUP BY day_name, created_at
-      ORDER BY created_at ASC
-    `;
+// 2. Weekly Chart (Sen–Min)
+// ==============================
+const chartDataRaw = await sql`
+  SELECT 
+    TO_CHAR(created_at, 'Dy') as day_name,
+    SUM(total_amount) as daily_revenue,
+    COUNT(id) as daily_tx
+  FROM transactions
+  WHERE created_at >= date_trunc('week', CURRENT_DATE)
+  GROUP BY day_name
+`;
 
-    const dayMap: { [key: string]: string } = {
-      'Sun': 'Min', 'Mon': 'Sen', 'Tue': 'Sel', 'Wed': 'Rab', 'Thu': 'Kam', 'Fri': 'Jum', 'Sat': 'Sab'
-    };
-    const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const dayMap: { [key: string]: string } = {
+  'Sun': 'Min', 'Mon': 'Sen', 'Tue': 'Sel',
+  'Wed': 'Rab', 'Thu': 'Kam', 'Fri': 'Jum', 'Sat': 'Sab'
+};
+
+const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const chartMap: any = {};
+chartDataRaw.forEach(d => {
+  const day = d.day_name.trim();
+  chartMap[day] = {
+    revenue: Number(d.daily_revenue),
+    transactions: Number(d.daily_tx),
+  };
+});
+
+const charts = daysOrder.map(day => ({
+  name: dayMap[day],
+  revenue: chartMap[day]?.revenue || 0,
+  transactions: chartMap[day]?.transactions || 0,
+}));
+
     
-    const charts = daysOrder.map(day => {
-      const found = chartDataRaw.find(d => d.day_name.trim() === day);
-      return {
-        name: dayMap[day],
-        revenue: found ? Number(found.daily_revenue) : 0,
-        transactions: found ? Number(found.daily_tx) : 0,
-      };
-    });
-
 
     // ==============================
     // 3. TOP MENU (Top 5)

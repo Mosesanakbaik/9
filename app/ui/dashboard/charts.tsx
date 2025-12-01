@@ -12,30 +12,58 @@
   /* ---------------------------
     WEEKLY SALES BAR CHART
   ----------------------------*/
-  export function WeeklySalesChart({ data }: { data: any[] }) {
-    return (
-      <div className="w-full">
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 12 }} dy={10} />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6b7280", fontSize: 12 }}
-              tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`}
-            />
-            <Tooltip
-              cursor={{ fill: "#fdf2f8" }}
-              formatter={(value: number) => [formatCurrency(value), "Penjualan"]}
-              contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-            />
-            <Bar dataKey="revenue" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={40} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
+
+export function WeeklySalesChart({ data }: { data: any[] }) {
+  return (
+    <div className="w-full">
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={data}
+          margin={{ top: 10, right: 0, left: 30, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#f3f4f6"
+          />
+
+          <XAxis
+            dataKey="name"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#6b7280", fontSize: 12 }}
+            dy={10}
+          />
+
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#6b7280", fontSize: 12 }}
+            tickFormatter={(val: number): string => `${(val / 1000).toFixed(0)}K`}
+          />
+
+          <Tooltip
+            cursor={{ fill: "#fdf2f8" }}
+            formatter={(value: number) => [formatCurrency(value), "Penjualan"]}
+            contentStyle={{
+              borderRadius: "8px",
+              border: "none",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+            }}
+          />
+
+          <Bar
+            dataKey="revenue"
+            fill="#ec4899"
+            radius={[4, 4, 0, 0]}
+            barSize={40}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 
   /* ---------------------------
     TRANSACTION TREND LINE CHART

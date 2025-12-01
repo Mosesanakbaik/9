@@ -78,7 +78,7 @@ export default function TopCustomersTable({ initialData }: TopCustomersTableProp
             value={selectedPeriod}
             onChange={(e) => handlePeriodChange(e.target.value as Period)}
             disabled={loading}
-            className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            className="text-sm border border-gray-300 rounded-md px-3 pr-8 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
           >
             {periodOptions.map(option => (
               <option key={option.value} value={option.value}>

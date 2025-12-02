@@ -29,7 +29,7 @@ export default async function Page() {
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-pink-600">Dashboard Overview</h1>
         <p className="text-sm text-gray-500">
-          Pantau performa bisnis Babi Pedia minggu ini
+          Pantau Performa Bisnis BABIPEDIA Minggu Ini
         </p>
       </div>
 
@@ -39,7 +39,7 @@ export default async function Page() {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-pink-600">Penjualan Mingguan</h3>
-            <p className="text-sm text-gray-500">Performa penjualan 7 hari terakhir</p>
+            <p className="text-sm text-gray-500">Performa Penjualan 7 Hari Terakhir</p>
           </div>
           <WeeklySalesChart data={charts} />
         </div>
@@ -47,7 +47,7 @@ export default async function Page() {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-pink-600">Tren Transaksi</h3>
-            <p className="text-sm text-gray-500">Jumlah transaksi per hari</p>
+            <p className="text-sm text-gray-500">Jumlah Transaksi Per Hari</p>
           </div>
           <TransactionTrendChart data={charts} />
         </div>
@@ -55,7 +55,7 @@ export default async function Page() {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-pink-600">Top Menu</h3>
-            <p className="text-sm text-gray-500">Menu yang paling banyak dipesan</p>
+            <p className="text-sm text-gray-500">Menu Yang Paling Banyak Dipesan</p>
           </div>
           <TopMenuPieChart data={topMenuFormatted} />
         </div>

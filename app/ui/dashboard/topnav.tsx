@@ -20,7 +20,7 @@ export default function TopNav() {
             </div>
 
             <div className="hidden md:block">
-              <strong className="text-lg">Babipedia</strong>
+              <strong className="text-lg">BABIPEDIA</strong>
               <span className="text-xs opacity-90 block mt-1">All about Pork!</span>
             </div>
           </Link>

@@ -18,9 +18,6 @@ export const formatCurrency = (amount: number | string): string => {
 export const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
 
-  // Tambahkan offset WIB (+7 jam)
-  const wibDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
-
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "long",
@@ -28,7 +25,8 @@ export const formatDate = (dateStr: string) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(wibDate);
+    timeZone: "Asia/Jakarta"   // 👉 ini yang benar
+  }).format(date);
 };
 
 

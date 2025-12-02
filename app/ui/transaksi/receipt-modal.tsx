@@ -107,11 +107,6 @@ export default function ReceiptModal({
                             <span>TOTAL</span>
                             <span>{formatCurrency(grandTotal)}</span>
                         </div>
-
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>Metode:</span>
-                            <span>Tunai / QRIS</span>
-                        </div>
                     </div>
 
                     {/* Footer */}

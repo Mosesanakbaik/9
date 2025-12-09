@@ -36,7 +36,7 @@ export default async function Page(props: { searchParams?: Promise<{ query?: str
                 href="/dashboard/transaksi/create" 
                 className="flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-500"
             >
-                <Plus className="w-5 h-5" /> Transaksi Baru
+               Transaksi Baru
             </Link>
         </div>
 

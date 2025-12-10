@@ -426,3 +426,252 @@ export async function createTransaction(prevState: any, formData: FormData) {
   
   redirect('/dashboard/transaksi');
 }
+
+
+// Tambahkan ke actions.ts Anda
+
+const TransactionSchema = z.object({
+  customerId: z.string().nullable(),
+  items: z.string().transform((str) => {
+    try {
+      return JSON.parse(str) as { id: string; price: number; quantity: number }[];
+    } catch {
+      return [];
+    }
+  }),
+  totalAmount: z.coerce.number().min(0),
+});
+
+export type TransactionState = {
+  errors?: {
+    customerId?: string[];
+    items?: string[];
+    totalAmount?: string[];
+  };
+  message?: string | null;
+};
+
+export async function updateTransaction(
+  id: string,
+  prevState: TransactionState,
+  formData: FormData
+) {
+  const rawData = {
+    customerId: formData.get('customerId') as string || null,
+    items: formData.get('items') as string,
+    totalAmount: formData.get('totalAmount'),
+  };
+
+  const validated = TransactionSchema.safeParse(rawData);
+
+  if (!validated.success) {
+    return {
+      errors: validated.error.flatten().fieldErrors,
+      message: 'Validasi gagal. Periksa input Anda.',
+    };
+  }
+
+  const { customerId, items, totalAmount } = validated.data;
+
+  if (items.length === 0) {
+    return { message: 'Keranjang belanja kosong.' };
+  }
+
+  try {
+    await sql.begin(async (sql) => {
+      // 1. Ambil data transaksi lama untuk rollback stok
+      const oldTransaction = await sql`
+        SELECT ti.menu_id, ti.quantity, t.customer_id, t.total_amount
+        FROM transaction_items ti
+        JOIN transactions t ON t.id = ti.transaction_id
+        WHERE ti.transaction_id = ${id}
+      `;
+
+      const oldCustomerId = oldTransaction[0]?.customer_id;
+      const oldTotalAmount = oldTransaction[0]?.total_amount || 0;
+
+      // 2. Rollback sold_count menu lama
+      for (const oldItem of oldTransaction) {
+        await sql`
+          UPDATE menus 
+          SET sold_count = sold_count - ${oldItem.quantity}
+          WHERE id = ${oldItem.menu_id}
+        `;
+
+        // Rollback stok bahan
+        const recipes = await sql`
+          SELECT stock_id, amount_needed 
+          FROM menu_recipes 
+          WHERE menu_id = ${oldItem.menu_id}
+        `;
+
+        for (const recipe of recipes) {
+          const totalNeeded = recipe.amount_needed * oldItem.quantity;
+          await sql`
+            UPDATE stocks 
+            SET stock = stock + ${totalNeeded}
+            WHERE id = ${recipe.stock_id}
+          `;
+        }
+      }
+
+      // 3. Rollback customer stats lama (jika ada)
+      if (oldCustomerId) {
+        await sql`
+          UPDATE customers
+          SET 
+            transaction_frequency = transaction_frequency - 1,
+            total_spent = total_spent - ${oldTotalAmount}
+          WHERE id = ${oldCustomerId}
+        `;
+      }
+
+      // 4. Proses transaksi baru (sama seperti create)
+      for (const item of items) {
+        await sql`
+          UPDATE menus 
+          SET sold_count = sold_count + ${item.quantity}
+          WHERE id = ${item.id}
+        `;
+
+        const recipes = await sql`
+          SELECT stock_id, amount_needed 
+          FROM menu_recipes 
+          WHERE menu_id = ${item.id}
+        `;
+
+        for (const recipe of recipes) {
+          const totalNeeded = recipe.amount_needed * item.quantity;
+
+          const updatedStock = await sql`
+            UPDATE stocks 
+            SET stock = stock - ${totalNeeded}
+            WHERE id = ${recipe.stock_id}
+            RETURNING stock, name
+          `;
+
+          if (updatedStock[0].stock < 0) {
+            throw new Error(`Stok bahan '${updatedStock[0].name}' tidak mencukupi.`);
+          }
+        }
+      }
+
+      // 5. Update transaksi utama
+      const newCustomerId = customerId && customerId !== "" ? customerId : null;
+      
+      await sql`
+        UPDATE transactions
+        SET customer_id = ${newCustomerId}, total_amount = ${totalAmount}
+        WHERE id = ${id}
+      `;
+
+      // 6. Update customer stats baru (jika ada)
+      if (newCustomerId) {
+        await sql`
+          UPDATE customers
+          SET 
+            transaction_frequency = transaction_frequency + 1,
+            total_spent = total_spent + ${totalAmount}
+          WHERE id = ${newCustomerId}
+        `;
+      }
+
+      // 7. Delete & Insert ulang transaction_items
+      await sql`DELETE FROM transaction_items WHERE transaction_id = ${id}`;
+
+      for (const item of items) {
+        await sql`
+          INSERT INTO transaction_items (transaction_id, menu_id, quantity, price_at_time, subtotal)
+          VALUES (${id}, ${item.id}, ${item.quantity}, ${item.price}, ${item.price * item.quantity})
+        `;
+      }
+    });
+
+  } catch (error) {
+    console.error('Update Transaction Failed:', error);
+    return { 
+      message: error instanceof Error ? error.message : 'Gagal mengupdate transaksi.' 
+    };
+  }
+
+  revalidatePath('/dashboard/transaksi');
+  revalidatePath('/dashboard/stok');
+  revalidatePath('/dashboard/menu');
+  revalidatePath('/dashboard/pelanggan');
+
+  redirect('/dashboard/transaksi');
+}
+
+// Tambahkan ke actions.ts
+
+export async function deleteTransaction(id: string) {
+  try {
+    await sql.begin(async (sql) => {
+      // 1. Ambil data transaksi yang akan dihapus
+      const transaction = await sql`
+        SELECT ti.menu_id, ti.quantity, t.customer_id, t.total_amount
+        FROM transaction_items ti
+        JOIN transactions t ON t.id = ti.transaction_id
+        WHERE ti.transaction_id = ${id}
+      `;
+
+      if (transaction.length === 0) {
+        throw new Error('Transaksi tidak ditemukan');
+      }
+
+      const customerId = transaction[0].customer_id;
+      const totalAmount = transaction[0].total_amount;
+
+      // 2. Rollback sold_count menu
+      for (const item of transaction) {
+        await sql`
+          UPDATE menus 
+          SET sold_count = sold_count - ${item.quantity}
+          WHERE id = ${item.menu_id}
+        `;
+
+        // 3. Rollback stok bahan
+        const recipes = await sql`
+          SELECT stock_id, amount_needed 
+          FROM menu_recipes 
+          WHERE menu_id = ${item.menu_id}
+        `;
+
+        for (const recipe of recipes) {
+          const totalNeeded = recipe.amount_needed * item.quantity;
+          await sql`
+            UPDATE stocks 
+            SET stock = stock + ${totalNeeded}
+            WHERE id = ${recipe.stock_id}
+          `;
+        }
+      }
+
+      // 4. Rollback customer stats (jika ada)
+      if (customerId) {
+        await sql`
+          UPDATE customers
+          SET 
+            transaction_frequency = GREATEST(0, transaction_frequency - 1),
+            total_spent = GREATEST(0, total_spent - ${totalAmount})
+          WHERE id = ${customerId}
+        `;
+      }
+
+      // 5. Hapus transaction_items
+      await sql`DELETE FROM transaction_items WHERE transaction_id = ${id}`;
+
+      // 6. Hapus transaction
+      await sql`DELETE FROM transactions WHERE id = ${id}`;
+    });
+
+  } catch (error) {
+    console.error('Delete Transaction Failed:', error);
+    throw new Error(error instanceof Error ? error.message : 'Gagal menghapus transaksi');
+  }
+
+  revalidatePath('/dashboard/transaksi');
+  revalidatePath('/dashboard/stok');
+  revalidatePath('/dashboard/menu');
+  revalidatePath('/dashboard/pelanggan');
+}

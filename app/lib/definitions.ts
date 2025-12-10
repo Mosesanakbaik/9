@@ -48,6 +48,7 @@ export type Menu = {
 };
 
 export type TransactionItem = {
+  menu_id: string;        // TAMBAHKAN INI
   menu_name: string;
   quantity: number;
   price: number;

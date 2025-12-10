@@ -2,10 +2,12 @@
 
 import { Transaction } from '@/app/lib/definitions';
 import { formatCurrency, formatDate } from '@/app/lib/utils';
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2, Pencil } from 'lucide-react';
 import { useState } from 'react';
-import { getTransactionDetail } from '@/app/lib/actions';  // Import Server Action
+import { getTransactionDetail } from '@/app/lib/actions';
 import ReceiptModal from './receipt-modal';
+import Link from 'next/link';
+import DeleteTransactionButton from '@/app/ui/transaksi/delete';
 
 export default function TransactionTable({ transactions }: { transactions: Transaction[] }) {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
@@ -38,7 +40,6 @@ export default function TransactionTable({ transactions }: { transactions: Trans
             </tr>
           </thead>
           <tbody className="bg-white">
-            {/* Removed unused 'index' argument */}
             {transactions.map((tx) => (
               <tr key={tx.id} className="border-b py-3 text-sm hover:bg-gray-50">
                 <td className="whitespace-nowrap py-3 pl-6 pr-3 font-mono font-bold text-pink-600">
@@ -51,23 +52,39 @@ export default function TransactionTable({ transactions }: { transactions: Trans
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-3 py-3">
-                  {tx.customer_name}
+                  {tx.customer_name || '-'}
                 </td>
                 <td className="whitespace-nowrap px-3 py-3 font-bold text-gray-700">
                   {formatCurrency(tx.total_amount)}
                 </td>
                 <td className="whitespace-nowrap py-3 pl-6 pr-3">
-                  <button 
-                    onClick={() => handleViewDetail(tx.id)}
-                    disabled={isLoading}
-                    className="flex items-center gap-1 rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition"
-                  >
-                    {isLoading && selectedTx?.id === tx.id ? (
+                  <div className="flex items-center gap-2">
+                    {/* Tombol Lihat Detail */}
+                    <button 
+                      onClick={() => handleViewDetail(tx.id)}
+                      disabled={isLoading}
+                      className="flex items-center gap-1 rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition"
+                      title="Lihat Detail"
+                    >
+                      {isLoading && selectedTx?.id === tx.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
+                      ) : (
                         <Eye className="w-4 h-4" />
-                    )}
-                  </button>
+                      )}
+                    </button>
+
+                    {/* Tombol Edit */}
+                    <Link
+                      href={`/dashboard/transaksi/${encodeURIComponent(tx.id)}/edit`}
+                      className="flex items-center gap-1 rounded-md border border-blue-200 p-2 text-blue-600 hover:bg-blue-50 transition"
+                      title="Edit Transaksi"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Link>
+
+                    {/* Tombol Delete */}
+                    <DeleteTransactionButton id={tx.id} />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -78,8 +95,8 @@ export default function TransactionTable({ transactions }: { transactions: Trans
       {/* RENDER MODAL */}
       {selectedTx && (
         <ReceiptModal 
-            transaction={selectedTx} 
-            onClose={() => setSelectedTx(null)} 
+          transaction={selectedTx} 
+          onClose={() => setSelectedTx(null)} 
         />
       )}
     </>

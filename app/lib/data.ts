@@ -293,48 +293,50 @@ export async function fetchTransactions(query: string = '') {
   }
 }
 
-export async function fetchTransactionById(id: string) {
-  noStore();
-  try {
-    const transactionData = await sql<Transaction[]>`
-      SELECT 
-        t.id, 
-        t.total_amount, 
-        t.created_at as date,
-        COALESCE(c.name, 'Umum / Guest') as customer_name
-      FROM transactions t
-      LEFT JOIN customers c ON t.customer_id = c.id
-      WHERE t.id = ${id}
-    `;
+// Update di data.ts (atau tempat Anda menyimpan fungsi fetch)
 
-    const itemsData = await sql<TransactionItem[]>`
-      SELECT 
-        m.name as menu_name,
-        ti.quantity,
-        ti.price_at_time as price,
-        ti.subtotal
-      FROM transaction_items ti
-      JOIN menus m ON ti.menu_id = m.id
-      WHERE ti.transaction_id = ${id}
-    `;
+export async function fetchTransactionById(id: string): Promise<Transaction> {
+  const result = await sql`
+    SELECT 
+      t.id,
+      t.total_amount,
+      t.created_at as date,
+      COALESCE(c.name, 'Guest') as customer_name,
+      t.customer_id
+    FROM transactions t
+    LEFT JOIN customers c ON t.customer_id = c.id
+    WHERE t.id = ${id}
+  `;
 
-    if (transactionData.length === 0) {
-      return null;
-    }
-
-    const transaction = transactionData[0];
-
-    const result: Transaction = {
-      ...transaction,
-      items: itemsData
-    };
-
-    return result;
-
-  } catch (error) {
-    console.error('Database Error:', error);
-    return null;
+  if (result.length === 0) {
+    throw new Error('Transaksi tidak ditemukan');
   }
+
+  const items = await sql`
+    SELECT 
+      ti.menu_id,
+      m.name as menu_name,
+      ti.quantity,
+      ti.price_at_time as price,
+      ti.subtotal
+    FROM transaction_items ti
+    JOIN menus m ON ti.menu_id = m.id
+    WHERE ti.transaction_id = ${id}
+  `;
+
+  return {
+    id: result[0].id,
+    customer_name: result[0].customer_name,
+    total_amount: result[0].total_amount,
+    date: result[0].date,
+    items: items.map((item) => ({
+      menu_id: item.menu_id,
+      menu_name: item.menu_name,
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.subtotal,
+    })),
+  };
 }
 
 export async function fetchMenusForPOS() {

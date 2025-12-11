@@ -86,7 +86,123 @@ export async function createCustomer(prevState: State, formData: FormData) {
   revalidatePath('/dashboard/pelanggan');
   redirect('/dashboard/pelanggan');
 }
+// Tambahkan ke actions.ts (setelah createCustomer)
 
+// Tambahkan ke actions.ts (setelah createCustomer)
+// PASTIKAN import redirect sudah ada di atas: import { redirect } from 'next/navigation';
+
+const UpdateCustomerSchema = z.object({
+  name: z.string().trim().min(1, { message: 'Nama tidak boleh kosong.' }),
+  phone: z.string().trim().min(1, { message: 'Nomor HP wajib diisi.' }),
+  address: z.string().trim().min(1, { message: 'Alamat wajib diisi.' }),
+});
+
+export type UpdateCustomerState = {
+  errors?: {
+    name?: string[];
+    phone?: string[];
+    address?: string[];
+  };
+  message?: string | null;
+  values?: {
+    name?: string;
+    phone?: string;
+    address?: string;
+  };
+};
+
+export async function updateCustomer(
+  id: string,
+  prevState: UpdateCustomerState,
+  formData: FormData
+) {
+  const rawFormData = {
+    name: formData.get('name') as string,
+    phone: formData.get('phone') as string,
+    address: formData.get('address') as string,
+  };
+
+  const validatedFields = UpdateCustomerSchema.safeParse(rawFormData);
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Gagal mengupdate pelanggan. Periksa input Anda.',
+      values: rawFormData,
+    };
+  }
+
+  const { name, phone, address } = validatedFields.data;
+
+  try {
+    // Cek duplikat nomor HP (kecuali nomor customer sendiri)
+    const existingUser = await sql`
+      SELECT id FROM customers 
+      WHERE phone = ${phone} AND id != ${id}
+      LIMIT 1
+    `;
+
+    if (existingUser.length > 0) {
+      return {
+        errors: {
+          phone: ['Nomor HP ini sudah digunakan pelanggan lain.'],
+        },
+        message: 'Gagal. Nomor HP duplikat.',
+        values: rawFormData,
+      };
+    }
+
+    // Update customer
+    await sql`
+      UPDATE customers
+      SET name = ${name}, phone = ${phone}, address = ${address}
+      WHERE id = ${id}
+    `;
+
+  } catch (error) {
+    console.error('Database Error:', error);
+    return {
+      message: 'Database Error: Gagal mengupdate pelanggan.',
+      values: rawFormData,
+    };
+  }
+
+  revalidatePath('/dashboard/pelanggan');
+  redirect('/dashboard/pelanggan');
+}
+// Tambahkan ke actions.ts
+
+export async function deleteCustomer(id: string) {
+  try {
+    // Cek apakah customer memiliki transaksi
+    const transactions = await sql`
+      SELECT COUNT(*) as count 
+      FROM transactions 
+      WHERE customer_id = ${id}
+    `;
+
+    const transactionCount = parseInt(transactions[0].count);
+
+    if (transactionCount > 0) {
+      throw new Error(
+        `Pelanggan ini memiliki ${transactionCount} transaksi. Tidak dapat dihapus.`
+      );
+    }
+
+    // Hapus customer jika tidak ada transaksi
+    await sql`DELETE FROM customers WHERE id = ${id}`;
+
+  } catch (error) {
+    console.error('Delete Customer Failed:', error);
+    throw new Error(
+      error instanceof Error 
+        ? error.message 
+        : 'Gagal menghapus pelanggan'
+    );
+  }
+
+  revalidatePath('/dashboard/pelanggan');
+}
 //------------
 //stok
 //------------

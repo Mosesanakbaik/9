@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { Customer } from '@/app/lib/definitions';
 import { formatCurrency, getCustomerStatus, formatPhoneForWA } from '@/app/lib/utils';
 import StatusBadge from './status';
-import { EyeIcon, XMarkIcon } from '@heroicons/react/24/outline'; 
+import { EyeIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import DeleteCustomerButton from '@/app/ui/pelanggan/delete';
 
 export default function CustomersTable({ customers }: { customers: Customer[] }) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -44,11 +46,11 @@ export default function CustomersTable({ customers }: { customers: Customer[] })
                       {customer.name}
                     </td>
 
-                    {/* ⭐ NOMOR HP → Klik buka WhatsApp */}
                     <td className="whitespace-nowrap px-3 py-3">
                       <a
                         href={`https://wa.me/${formatPhoneForWA(customer.phone)}`}
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="text-pink-600 hover:underline"
                       >
                         {customer.phone}
@@ -72,13 +74,32 @@ export default function CustomersTable({ customers }: { customers: Customer[] })
                     </td>
 
                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
-                      <button
-                        onClick={() => setSelectedCustomer(customer)}
-                        className="rounded-md border p-2 hover:bg-gray-100 text-gray-600"
-                        title="Lihat Detail"
-                      >
-                        <EyeIcon className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {/* Button Lihat Detail */}
+                        <button
+                          onClick={() => setSelectedCustomer(customer)}
+                          className="rounded-md border p-2 hover:bg-gray-100 text-gray-600"
+                          title="Lihat Detail"
+                        >
+                          <EyeIcon className="w-5 h-5" />
+                        </button>
+
+                        {/* Button Edit */}
+                        <Link
+                          href={`/dashboard/pelanggan/${customer.id}/edit`}
+                          className="rounded-md border border-blue-200 p-2 hover:bg-blue-50 text-blue-600 inline-flex items-center justify-center"
+                          title="Edit Pelanggan"
+                        >
+                          <PencilIcon className="w-5 h-5" />
+                        </Link>
+
+                        {/* Button Delete */}
+                        <DeleteCustomerButton 
+                          id={customer.id}
+                          name={customer.name}
+                          transactionCount={customer.transaction_frequency}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
@@ -111,13 +132,13 @@ export default function CustomersTable({ customers }: { customers: Customer[] })
               
               <DetailRow label="Nama" value={selectedCustomer.name} />
 
-              {/* ⭐ Nomor di modal juga bisa klik WA */}
               <DetailRow 
                 label="No. HP"
                 value={
                   <a 
                     href={`https://wa.me/${formatPhoneForWA(selectedCustomer.phone)}`}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="text-pink-600 hover:underline"
                   >
                     {selectedCustomer.phone}
@@ -152,7 +173,6 @@ export default function CustomersTable({ customers }: { customers: Customer[] })
   );
 }
 
-// ⭐ DetailRow sekarang support ReactNode
 function DetailRow({
   label,
   value,

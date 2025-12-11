@@ -725,3 +725,37 @@ const topCustomersRaw = await sql`
 }
 
  
+// Tambahkan ke data.ts
+
+export async function fetchCustomerById(id: string): Promise<Customer> {
+  // Validasi input
+  if (!id || typeof id !== 'string') {
+    throw new Error('ID pelanggan tidak valid');
+  }
+
+  const result = await sql`
+    SELECT 
+      id,
+      name,
+      phone,
+      address,
+      transaction_frequency,
+      total_spent
+    FROM customers
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+
+  if (result.length === 0) {
+    throw new Error('Pelanggan tidak ditemukan');
+  }
+
+  return {
+    id: result[0].id,
+    name: result[0].name,
+    phone: result[0].phone,
+    address: result[0].address,
+    transaction_frequency: result[0].transaction_frequency,
+    total_spent: result[0].total_spent,
+  };
+}

@@ -48,14 +48,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         console.log("Login successful!");
 
+        // ✅ TAMBAHKAN ROLE
         return {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role || 'staff', // Default: staff
         };
       },
     }),
   ],
 
   session: { strategy: "jwt" },
+  
+  // ✅ TAMBAHKAN CALLBACKS untuk inject role ke session
+  callbacks: {
+    async jwt({ token, user }) {
+      // Saat login pertama kali, inject role ke token
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Inject role dari token ke session
+      if (session.user) {
+        session.user.role = token.role as 'admin' | 'staff';
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
 });

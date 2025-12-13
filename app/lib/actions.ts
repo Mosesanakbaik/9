@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation';
 import { fetchTransactionById } from './data';
 import sql from './db';
 // const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+import { auth } from '@/app/lib/auth'
+
 
 const FormSchema = z.object({
   name: z.string().trim().min(1, { message: 'Nama tidak boleh kosong.' }),
@@ -572,6 +574,14 @@ export async function updateTransaction(
   prevState: TransactionState,
   formData: FormData
 ) {
+  const session = await auth();
+  const userRole = session?.user?.role || 'staff';
+  
+  if (userRole !== 'admin') {
+    return {
+      message: '⛔ Akses ditolak. Hanya admin yang dapat mengedit transaksi.',
+    };
+  }
   const rawData = {
     customerId: formData.get('customerId') as string || null,
     items: formData.get('items') as string,
@@ -721,6 +731,12 @@ export async function updateTransaction(
 // Tambahkan ke actions.ts
 
 export async function deleteTransaction(id: string) {
+ const session = await auth();
+  const userRole = session?.user?.role || 'staff';
+  
+  if (userRole !== 'admin') {
+    throw new Error('⛔ Akses ditolak. Hanya admin yang dapat menghapus transaksi.');
+  }
   try {
     await sql.begin(async (sql) => {
       // 1. Ambil data transaksi yang akan dihapus
@@ -791,3 +807,5 @@ export async function deleteTransaction(id: string) {
   revalidatePath('/dashboard/menu');
   revalidatePath('/dashboard/pelanggan');
 }
+
+

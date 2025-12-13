@@ -1,6 +1,7 @@
 // app/dashboard/transaksi/[id]/edit/page.tsx
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/app/lib/auth';
 import { fetchTransactionById, fetchCustomers, fetchMenus } from '@/app/lib/data';
 import EditTransactionForm from '@/app/ui/transaksi/edit-form';
 
@@ -9,28 +10,28 @@ type PageProps = {
 };
 
 export default async function EditTransactionPage(props: PageProps) {
+  // 🔒 CEK AUTH & ROLE DULU
+  const session = await auth();
+  
+  if (!session) {
+    redirect('/login');
+  }
+
+  const userRole = session.user.role || 'staff';
+  
+  // Redirect jika bukan admin
+  if (userRole !== 'admin') {
+    redirect('/dashboard/transaksi?error=access_denied');
+  }
+
   // Await params terlebih dahulu
   const params = await props.params;
   const id = params.id;
 
-  // Debug log (akan muncul di terminal server)
-  console.log('Params received:', params);
-  console.log('ID value:', id);
-  console.log('ID type:', typeof id);
-
   // Validasi ID
   if (!id || id === 'undefined') {
     console.error('Invalid ID:', id);
-    return (
-      <div className="p-6">
-        <div className="rounded-lg bg-red-50 p-4">
-          <h2 className="font-bold text-red-800">Debug Info:</h2>
-          <pre className="mt-2 text-sm">
-            {JSON.stringify({ params, id, type: typeof id }, null, 2)}
-          </pre>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   try {
@@ -66,6 +67,6 @@ export default async function EditTransactionPage(props: PageProps) {
     );
   } catch (error) {
     console.error('Error loading transaction:', error);
-    throw error;
+    notFound();
   }
 }

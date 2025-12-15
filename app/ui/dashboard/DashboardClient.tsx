@@ -5,20 +5,62 @@ import { useQuery } from '@tanstack/react-query';
 import DashboardCards from "./summary-cards";
 import { WeeklySalesChart, TransactionTrendChart, TopMenuPieChart } from "./charts";
 import TopCustomersTable from "./TopCustomersTable";
+import { RefreshCw } from 'lucide-react';
 
 async function fetchDashboard() {
-  const res = await fetch('/api/dashboard');
-  if (!res.ok) throw new Error('Failed to fetch dashboard');
+  const res = await fetch('/api/dashboard', {
+    cache: 'no-store', // ✅ Disable fetch cache juga
+    headers: {
+      'Cache-Control': 'no-cache',
+    },
+  });
+  
+  if (!res.ok) {
+    throw new Error('Failed to fetch dashboard');
+  }
+  
   return res.json();
 }
 
 export default function DashboardClient() {
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboard,
     refetchInterval: 5000, // 5 detik
-    refetchIntervalInBackground: true
+    refetchIntervalInBackground: true,
+    staleTime: 0, // ✅ Data selalu dianggap stale
+    gcTime: 0, // ✅ Tidak cache di memory (previously cacheTime)
   });
+
+  // Loading state
+  if (!data && isFetching) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <RefreshCw className="w-8 h-8 animate-spin text-pink-500" />
+          <p className="text-sm text-gray-500">Memuat dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="rounded-lg bg-red-50 border border-red-200 p-6">
+        <h3 className="font-semibold text-red-800 mb-2">Error loading dashboard</h3>
+        <p className="text-sm text-red-600 mb-4">
+          {error instanceof Error ? error.message : 'Unknown error'}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
 
   if (!data) return null;
 
@@ -37,9 +79,32 @@ export default function DashboardClient() {
           </p>
         </div>
 
-        <span className="text-xs text-gray-400">
-          {isFetching ? 'Updating…' : 'Live'}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Live Indicator */}
+          <div className="flex items-center gap-2">
+            {isFetching ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-pink-500" />
+                <span className="text-xs text-gray-400">Updating...</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs text-gray-400">Live</span>
+              </>
+            )}
+          </div>
+
+          {/* Manual Refresh Button */}
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-xs text-gray-500 hover:text-pink-600 disabled:opacity-50"
+            title="Refresh Manual"
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       <DashboardCards data={data.cards} />

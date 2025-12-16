@@ -33,16 +33,7 @@ export default function DashboardClient() {
   });
 
   // Loading state
-  if (!data && isFetching) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-pink-500" />
-          <p className="text-sm text-gray-500">Memuat dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+ 
 
   // Error state
   if (isError) {

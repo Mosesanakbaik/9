@@ -31,6 +31,7 @@ export default function YearFilter() {
         onChange={handleYearChange}
         className="appearance-none w-full pl-10 pr-10 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-pink-500 cursor-pointer hover:border-pink-300 transition-colors"
       >
+        <option value="2025">2026</option>
         <option value="2025">2025</option>
         <option value="2024">2024</option>
         <option value="2023">2023</option>
